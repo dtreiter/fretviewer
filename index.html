@@ -8,6 +8,9 @@
     </head>
 
     <body onload="init();">
+        <div class="controls">
+            <input id="num-frets" type="range" min="5" max="24" onchange="updateFretboard();"></input>
+        </div>
         <div class="fretholder">
             <canvas id="fretboard" class="canvas" width="800" height="800"></canvas>
         </div>

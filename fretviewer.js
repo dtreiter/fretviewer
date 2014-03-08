@@ -1,5 +1,5 @@
-var BOARD_WIDTH = 200;
-var BOARD_HEIGHT = 500;
+var BOARD_WIDTH = 800;
+var BOARD_HEIGHT = 200;
 var FRET_THICKNESS = 2;
 var STRING_THICKNESS = 3;
 var STRING_PAD = 10;
@@ -8,8 +8,16 @@ var canvas;
 var stage;
 var fretboard;
 var tuning;
+var scale;
+var stringSpacing, fretSpacing;
 
-var update = true;
+//var update = true;
+
+function updateFretboard() {
+    fretboard.numFrets = $("#num-frets").val();
+    drawBoard();
+    drawScale(scale);
+}
 
 function init() {
     if (window.top != window) {
@@ -23,40 +31,38 @@ function init() {
     stage.mouseMoveOutside = true; // keep tracking the mouse even when it leaves the canvas
     
     fretboard = new createjs.Container();
-    //fretboard.notes = new createjs.Container();
+    fretboard.notes = new createjs.Container();
     fretboard.numFrets = 12;
-    fretboard.tuning = ["E", "A", "D", "G", "B", "E"];
+    fretboard.tuning = ["E", "B", "G", "D", "A", "E"]; // highest to lowest
     fretboard.numStrings = fretboard.tuning.length;
-    drawBoard(fretboard.numFrets, fretboard.numStrings);
-    var scale = ["A", "B", "C", "D", "E", "F", "G"];
+    drawBoard();
+    
+    scale = ["E", "F#", "G#", "A", "B", "C#", "D#"]; // E major
     drawScale(scale);
 
-    createjs.Ticker.addEventListener("tick", tick);
+    //createjs.Ticker.addEventListener("tick", tick);
 }
 
-function drawBoard(numFrets, numStrings) {
-    // create a shape to draw the background into:
-    var bg = new createjs.Shape();
-    stage.addChild(bg);
-
+function drawBoard() {
+    fretboard.removeAllChildren(); // erase a previously drawn fretboard
 
     var neck = new createjs.Shape();
     neck.x = 0; neck.y = 0;
     neck.graphics.beginFill("#977130").drawRect(neck.x, neck.y, BOARD_WIDTH, BOARD_HEIGHT);
     fretboard.addChild(neck);
     
-    var fretSpacing = BOARD_HEIGHT / numFrets;
-    for (var i = 0; i < numFrets; i++) {
+    fretSpacing = BOARD_WIDTH / fretboard.numFrets;
+    for (var i = 0; i < fretboard.numFrets; i++) {
         var fret = new createjs.Shape();
-        fret.graphics.beginFill("#c7b393").drawRect(0, i*fretSpacing, BOARD_WIDTH, FRET_THICKNESS);
+        fret.graphics.beginFill("#c7b393").drawRect(i*fretSpacing, 0, FRET_THICKNESS, BOARD_HEIGHT);
         fretboard.addChild(fret);
     }
 
-    var stringSpacing = (BOARD_WIDTH-2*STRING_PAD) / (fretboard.numStrings-1);
-    for (var i = 0; i < numStrings; i++) {
+    stringSpacing = (BOARD_HEIGHT-2*STRING_PAD) / (fretboard.numStrings-1);
+    for (var i = 0; i < fretboard.numStrings; i++) {
         var string = new createjs.Shape();
-        var xloc = STRING_PAD + i*stringSpacing - STRING_THICKNESS/2;
-        string.graphics.beginFill("#000").drawRect(xloc, 0, STRING_THICKNESS, BOARD_HEIGHT);
+        var yloc = STRING_PAD + i*stringSpacing - STRING_THICKNESS/2;
+        string.graphics.beginFill("#000").drawRect(0, yloc, BOARD_WIDTH, STRING_THICKNESS);
         fretboard.addChild(string);
     }
 
@@ -74,15 +80,19 @@ function drawBoard(numFrets, numStrings) {
 }
 
 function drawScale(scale) {
-    for (var note = 0; note < scale.length; note++) {
-        drawNote(scale[note]);
+    fretboard.notes.removeAllChildren(); // clear a previously drawn scale
+    drawNote(scale[0], "red");
+    for (var note = 1; note < scale.length; note++) {
+        drawNote(scale[note], "#DDD");
     }
+    stage.addChild(fretboard.notes);
+    stage.update();
 }
 
 /* Takes a note character (ie. "C") and draws it
  * as a circle on the fretboard
  */
-function drawNote(note) {
+function drawNote(note, color) {
     noteNum = getNoteNum(note);
     for (var string = 0; string < fretboard.numStrings; string++) {
         var baseNote = getNoteNum(fretboard.tuning[string]);
@@ -91,12 +101,10 @@ function drawNote(note) {
             if (curNote == noteNum) {
                 var noteCircle = new createjs.Shape();
 
-                var stringSpacing = (BOARD_WIDTH-2*STRING_PAD) / (fretboard.numStrings-1);
-                var x = STRING_PAD + string*stringSpacing;
-                var fretSpacing = (BOARD_HEIGHT/fretboard.numFrets);
-                var y = fret * fretSpacing + fretSpacing/2;
-                noteCircle.graphics.beginStroke("#000").beginFill("#FFF").drawCircle(x, y, 10);
-                stage.addChild(noteCircle);
+                var x = fret * fretSpacing + fretSpacing/2;
+                var y = STRING_PAD + string*stringSpacing;
+                noteCircle.graphics.beginStroke("#000").beginFill(color).drawCircle(x, y, 10);
+                fretboard.notes.addChild(noteCircle);
             }
         }
     }

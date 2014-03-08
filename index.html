@@ -7,9 +7,9 @@
         <script src="fretviewer.js"></script>
     </head>
 
-    <body onload="init();">
+    <body onload="fretviewer.init();">
         <div class="controls">
-            <input id="num-frets" type="range" min="5" max="24" onchange="updateFretboard();"></input>
+            <input id="num-frets" type="range" min="5" max="24"></input>
         </div>
         <div class="fretholder">
             <canvas id="fretboard" class="canvas" width="800" height="800"></canvas>

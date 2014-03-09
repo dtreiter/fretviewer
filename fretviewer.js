@@ -4,6 +4,8 @@ var fretviewer = function() {
     var FRET_THICKNESS = 2;
     var STRING_THICKNESS = 3;
     var STRING_PAD = 10;
+    var MAX_STRINGS = 9;
+    var MIN_STRINGS = 3;
 
     var NOTE_CHARS = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
 
@@ -13,23 +15,28 @@ var fretviewer = function() {
     var tuning;
     var scale;
     var stringSpacing, fretSpacing;
+    var mode = "RIGHT HANDED";
 
-    /* holds public method */
+    /* Holds public methods */
     var p = {};
 
     //var update = true;
 
     function updateFretboard() {
-        $("#num-frets").val(fretboard.numFrets);
+        updateUI();
         drawBoard();
         drawScale(scale);
+    }
+
+    function updateUI() {
+        $("#num-frets").val(fretboard.numFrets);
     }
 
     p.init = function() {
         if (window.top != window) {
             document.getElementById("header").style.display = "none";
         }
-        // create a new stage and point it at our canvas
+        /* Create a new stage and point it at our canvas */
         canvas = document.getElementById("fretboard");
         stage = new createjs.Stage(canvas);
         // enable touch interactions if supported on the current device
@@ -43,24 +50,76 @@ var fretviewer = function() {
         fretboard.numStrings = fretboard.tuning.length;
         
         scale = ["E", "F#", "G#", "A", "B", "C#", "D#"]; // E major
+
         updateFretboard();
-
+        initUI();
         //createjs.Ticker.addEventListener("tick", tick);
+    }
 
-        $("#num-frets").change(function() {
-            fretboard.numFrets = $("#num-frets").val();
+    function makeTuningSelectElements() {
+        /* Make select boxes for string tuning */
+        var tuningHTML = "";
+        for (var i = 0; i < fretboard.tuning.length; i++) {
+            tuningHTML += "<select class='tuning-string' id='string-" + i + "'>";
+            for (var note = 0; note < NOTE_CHARS.length; note++) {
+                if (fretboard.tuning[i] == getNoteChar(note)) {
+                    tuningHTML += "<option value='" + NOTE_CHARS[note] + "' selected='selected'>" + NOTE_CHARS[note] + "</option>";
+                }
+                else {
+                    tuningHTML += "<option value='" + NOTE_CHARS[note] + "'>" + NOTE_CHARS[note] + "</option>";
+                }
+            }
+            tuningHTML += "</select><br/>";
+        }
+        $("#tuning-container").html(tuningHTML);
+
+        /* Add listeners */
+        $("select.tuning-string").change(function () {
+            var stringNum = this.id.split("-")[1]; // example: this.id = string-0 -> stringNum = 0
+            fretboard.tuning[stringNum] = $(this).val();
             updateFretboard();
         });
     }
 
-    function drawBoard() {
-        fretboard.removeAllChildren(); // erase a previously drawn fretboard
+    function initUI() {
+        makeTuningSelectElements();
 
+        /* Add listeners for each UI element */
+        $("#num-frets").change(function() {
+            fretboard.numFrets = $("#num-frets").val();
+            updateFretboard();
+        });
+
+        $("#add-string").click(function () {
+            if (fretboard.tuning.length < MAX_STRINGS) {
+                fretboard.tuning.push("C");
+                updateFretboard();
+                makeTuningSelectElements();
+            }
+        });
+
+        $("#remove-string").click(function () {
+            if (fretboard.tuning.length > MIN_STRINGS) {
+                fretboard.tuning.pop();
+                updateFretboard();
+                makeTuningSelectElements();
+            }
+        });
+    }
+
+    function drawBoard() {
+        fretboard.numStrings = fretboard.tuning.length;
+
+        /* Erase a previously drawn fretboard */
+        fretboard.removeAllChildren();
+
+        /* Make neck */
         var neck = new createjs.Shape();
         neck.x = 0; neck.y = 0;
         neck.graphics.beginFill("#977130").drawRect(neck.x, neck.y, BOARD_WIDTH, BOARD_HEIGHT);
         fretboard.addChild(neck);
         
+        /* Make frets */
         fretSpacing = BOARD_WIDTH / fretboard.numFrets;
         for (var i = 0; i < fretboard.numFrets; i++) {
             var fret = new createjs.Shape();
@@ -68,6 +127,7 @@ var fretviewer = function() {
             fretboard.addChild(fret);
         }
 
+        /* Make strings */
         stringSpacing = (BOARD_HEIGHT-2*STRING_PAD) / (fretboard.numStrings-1);
         for (var i = 0; i < fretboard.numStrings; i++) {
             var string = new createjs.Shape();
@@ -90,7 +150,10 @@ var fretviewer = function() {
     }
 
     function drawScale(scale) {
-        fretboard.notes.removeAllChildren(); // clear a previously drawn scale
+        /* Clear a previously drawn scale */
+        fretboard.notes.removeAllChildren();
+
+        /* Draw the root note of the scale as red. Other notes white. */
         drawNote(scale[0], "red");
         for (var note = 1; note < scale.length; note++) {
             drawNote(scale[note], "#DDD");
@@ -99,9 +162,8 @@ var fretviewer = function() {
         stage.update();
     }
 
-    /* Takes a note character (ie. "C") and draws it
-    * as a circle on the fretboard
-    */
+
+    /* Takes a note character (ie. "C") and draws it as a circle on the fretboard */
     function drawNote(note, color) {
         noteNum = getNoteNum(note);
         for (var string = 0; string < fretboard.numStrings; string++) {
@@ -111,8 +173,13 @@ var fretviewer = function() {
                 if (curNote == noteNum) {
                     var noteCircle = new createjs.Shape();
 
-                    var x = fret * fretSpacing + fretSpacing/2;
-                    //var x = (fretboard.numFrets - (fret+1)) * fretSpacing + fretSpacing/2; // Left-handed
+                    var x;
+                    if (mode == "RIGHT HANDED") {
+                        x = fret * fretSpacing + fretSpacing/2;
+                    }
+                    if (mode == "LEFT HANDED") {
+                        x = (fretboard.numFrets - (fret+1)) * fretSpacing + fretSpacing/2; // Left-handed mode
+                    }
                     var y = STRING_PAD + string*stringSpacing;
                     noteCircle.graphics.beginStroke("#000").beginFill(color).drawCircle(x, y, 10);
                     fretboard.notes.addChild(noteCircle);
@@ -138,7 +205,6 @@ var fretviewer = function() {
         }
     }
     */
-
 
     return p;
 

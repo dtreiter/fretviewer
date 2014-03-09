@@ -2,17 +2,44 @@
 <html>
     <head>
         <title>Fretviewer</title>
+        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
         <script src="http://code.jquery.com/jquery-2.1.0.min.js" type="text/javascript"></script>
         <script src="easel.min.js" type="text/javascript"></script>
         <script src="fretviewer.js"></script>
+        <style type="text/css">
+            .page-container {
+                top: 40px;
+                left: 40px;
+                position: relative;
+            }
+
+            .controls {
+                float: left;
+            }
+
+            .fretholder {
+                position: absolute;
+                left: 300px;
+            }
+        </style>
     </head>
 
     <body onload="fretviewer.init();">
-        <div class="controls">
-            <input id="num-frets" type="range" min="5" max="24"></input>
-        </div>
-        <div class="fretholder">
-            <canvas id="fretboard" class="canvas" width="800" height="800"></canvas>
+        <div class="page-container">
+            <div class="controls">
+                <label for="num-frets">Number of frets:</label>
+                <input id="num-frets" type="number" min="5" max="24"></input>
+                <h3>Tuning</h3>
+                <br/>
+                <div id="tuning-container">
+                </div>
+                <button id="add-string" type="button" class="btn btn-primary">Add String</button>
+                <button id="remove-string" type="button" class="btn btn-danger">Remove String</button>
+                <br/>
+            </div>
+            <div class="fretholder">
+                <canvas id="fretboard" class="canvas" width="800" height="800"></canvas>
+            </div>
         </div>
     </body>
 </html>

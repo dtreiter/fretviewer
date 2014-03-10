@@ -4,8 +4,11 @@ var fretviewer = function() {
     var FRET_THICKNESS = 2;
     var STRING_THICKNESS = 3;
     var STRING_PAD = 10;
+    var MAX_FRETS = 25;
+    var MIN_FRETS = 5;
     var MAX_STRINGS = 9;
     var MIN_STRINGS = 3;
+    var NOTE_SIZE = 12;
 
     var NOTE_CHARS = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
 
@@ -15,7 +18,7 @@ var fretviewer = function() {
     var tuning;
     var scale;
     var stringSpacing, fretSpacing;
-    var mode = "RIGHT HANDED";
+    //var mode = "RIGHT HANDED";
 
     /* Holds public methods */
     var p = {};
@@ -30,6 +33,10 @@ var fretviewer = function() {
 
     function updateUI() {
         $("#num-frets").val(fretboard.numFrets);
+
+        makeTuningSelectElements();
+        /* Enable bootstrap select styling */
+        $(".selectpicker").selectpicker();
     }
 
     p.init = function() {
@@ -45,14 +52,15 @@ var fretviewer = function() {
         
         fretboard = new createjs.Container();
         fretboard.notes = new createjs.Container();
-        fretboard.numFrets = 12;
+        fretboard.numFrets = 13;
         fretboard.tuning = ["E", "B", "G", "D", "A", "E"]; // highest to lowest
         fretboard.numStrings = fretboard.tuning.length;
         
-        scale = ["E", "F#", "G#", "A", "B", "C#", "D#"]; // E major
+        // scale = ["E", "F#", "G#", "A", "B", "C#", "D#"]; // E major
+        scale = ["C", "D", "E", "F", "G", "A", "B"]; // C major
 
-        updateFretboard();
         initUI();
+        updateFretboard();
         //createjs.Ticker.addEventListener("tick", tick);
     }
 
@@ -60,7 +68,7 @@ var fretviewer = function() {
         /* Make select boxes for string tuning */
         var tuningHTML = "";
         for (var i = 0; i < fretboard.tuning.length; i++) {
-            tuningHTML += "<select class='tuning-string' id='string-" + i + "'>";
+            tuningHTML += "<select class='tuning-string selectpicker span1' id='string-" + i + "'>";
             for (var note = 0; note < NOTE_CHARS.length; note++) {
                 if (fretboard.tuning[i] == getNoteChar(note)) {
                     tuningHTML += "<option value='" + NOTE_CHARS[note] + "' selected='selected'>" + NOTE_CHARS[note] + "</option>";
@@ -86,23 +94,44 @@ var fretviewer = function() {
 
         /* Add listeners for each UI element */
         $("#num-frets").change(function() {
-            fretboard.numFrets = $("#num-frets").val();
+            /* Keep numFrets within reasonable bounds */
+            var numFrets = $("#num-frets").val();
+            if (numFrets > MAX_FRETS) numFrets = MAX_FRETS;
+            if (numFrets < MIN_FRETS) numFrets = MIN_FRETS;
+            fretboard.numFrets = numFrets;
+            updateFretboard();
+        });
+
+        $("#tuning-presets").change(function () {
+            var preset = $("#tuning-presets").val();
+            if (preset == "CUSTOM") {
+                /* Set to all A's */
+                fretboard.tuning = ["A", "A", "A", "A", "A", "A"];
+            }
+            else {
+                fretboard.tuning = preset.split(" ");
+            }
+            updateUI();
             updateFretboard();
         });
 
         $("#add-string").click(function () {
             if (fretboard.tuning.length < MAX_STRINGS) {
-                fretboard.tuning.push("C");
+                fretboard.tuning.push("A");
+                // /* Needed to update text on tuning-presets selectbox */
+                // var text = $("#tuning-presets option[value='CUSTOM']").text();
+                // $('.bootstrap-select .filter-option').text(text);
+                // $("#tuning-presets").val("CUSTOM");
+                updateUI();
                 updateFretboard();
-                makeTuningSelectElements();
             }
         });
 
         $("#remove-string").click(function () {
             if (fretboard.tuning.length > MIN_STRINGS) {
                 fretboard.tuning.pop();
+                updateUI();
                 updateFretboard();
-                makeTuningSelectElements();
             }
         });
     }
@@ -119,8 +148,33 @@ var fretviewer = function() {
         neck.graphics.beginFill("#977130").drawRect(neck.x, neck.y, BOARD_WIDTH, BOARD_HEIGHT);
         fretboard.addChild(neck);
         
-        /* Make frets */
+        /* Make reference dots */
         fretSpacing = BOARD_WIDTH / fretboard.numFrets;
+        for (var fret = 0; fret < fretboard.numFrets; fret++) {
+            var loc = fret % 12;
+            if (loc == 3 || loc == 5 || loc == 7) {
+                /* Make single dot */
+                var dotCircle = new createjs.Shape();
+                var x = fret * fretSpacing + fretSpacing/2;
+                var y = BOARD_HEIGHT/2;
+                dotCircle.graphics.beginStroke("#000").beginFill('#000').drawCircle(x, y, 8);
+                fretboard.addChild(dotCircle);
+            }
+            else if (loc == 0) {
+                /* Make double dots */
+                var upperDot = new createjs.Shape();
+                var lowerDot = new createjs.Shape();
+                var x = fret * fretSpacing + fretSpacing/2;
+                var upperY = BOARD_HEIGHT/3;
+                var lowerY = (2/3) * BOARD_HEIGHT;
+                upperDot.graphics.beginStroke("#000").beginFill('#000').drawCircle(x, upperY, 8);
+                lowerDot.graphics.beginStroke("#000").beginFill('#000').drawCircle(x, lowerY, 8);
+                fretboard.addChild(upperDot);
+                fretboard.addChild(lowerDot);
+            }
+        }
+
+        /* Make frets */
         for (var i = 0; i < fretboard.numFrets; i++) {
             var fret = new createjs.Shape();
             fret.graphics.beginFill("#c7b393").drawRect(i*fretSpacing, 0, FRET_THICKNESS, BOARD_HEIGHT);
@@ -174,14 +228,14 @@ var fretviewer = function() {
                     var noteCircle = new createjs.Shape();
 
                     var x;
-                    if (mode == "RIGHT HANDED") {
+                    //if (mode == "RIGHT HANDED") {
                         x = fret * fretSpacing + fretSpacing/2;
-                    }
-                    if (mode == "LEFT HANDED") {
-                        x = (fretboard.numFrets - (fret+1)) * fretSpacing + fretSpacing/2; // Left-handed mode
-                    }
+                    //}
+                    //if (mode == "LEFT HANDED") {
+                        //x = (fretboard.numFrets - (fret+1)) * fretSpacing + fretSpacing/2; // Left-handed mode
+                    //}
                     var y = STRING_PAD + string*stringSpacing;
-                    noteCircle.graphics.beginStroke("#000").beginFill(color).drawCircle(x, y, 10);
+                    noteCircle.graphics.beginStroke("#000").beginFill(color).drawCircle(x, y, NOTE_SIZE);
                     fretboard.notes.addChild(noteCircle);
                 }
             }

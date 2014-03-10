@@ -6,10 +6,13 @@ TODO:
 [X] Draw fretboard
 [X] Draw notes
 [X] Make landscape
-[ ] Add dots for fret 3,5,7,12 etc...
+[X] Add dots for fret 3,5,7,12 etc...
 [X] Make tuning editable
+[X] Make tuning presets
+[ ] Add ability to change scale
+[ ] Make scale presets
+[ ] Make chord presets
 [ ] Show tuning notes at end of fretboard
-[.] Make UI
-[ ] Add some default scales / chords
 [ ] Add slider to select region for drawing notes (simulates hand positions)
 [ ] Add notes by clicking
+[.] Make UI

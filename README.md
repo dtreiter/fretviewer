@@ -1,4 +1,5 @@
-Fretviewer - A web-based fretboard diagram generator
+Fretviewer
+A web-based fretboard diagram generator
 ==========
 
 TODO:
@@ -11,7 +12,7 @@ TODO:
 [X] Add ability to change scale
 [X] Make scale presets
 [X] Write note names on note circles
-[ ] Show tuning notes at end of fretboard
+[.] Show tuning notes at end of fretboard
 [ ] Make chord presets
 [ ] Add slider to select region for drawing notes (simulates hand positions)
 [ ] Add notes by clicking

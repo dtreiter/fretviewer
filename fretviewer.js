@@ -3,7 +3,7 @@ var fretviewer = function() {
     var BOARD_HEIGHT = 200;
     var FRET_THICKNESS = 2;
     var STRING_THICKNESS = 3;
-    var STRING_PAD = 10;
+    var STRING_PAD = 14;
     var MAX_FRETS = 25;
     var MIN_FRETS = 5;
     var MAX_STRINGS = 9;
@@ -17,12 +17,9 @@ var fretviewer = function() {
     var fretboard;
     var tuning;
     var stringSpacing, fretSpacing;
-    //var mode = "RIGHT HANDED";
 
     /* Holds public methods */
     var p = {};
-
-    //var update = true;
 
     function updateFretboard() {
         updateUI();
@@ -45,9 +42,6 @@ var fretviewer = function() {
         /* Create a new stage and point it at our canvas */
         canvas = document.getElementById("fretboard");
         stage = new createjs.Stage(canvas);
-        // enable touch interactions if supported on the current device
-        //createjs.Touch.enable(stage);
-        //stage.mouseMoveOutside = true; // keep tracking the mouse even when it leaves the canvas
         
         fretboard = new createjs.Container();
         fretboard.notes = new createjs.Container();
@@ -58,14 +52,13 @@ var fretviewer = function() {
 
         initUI();
         updateFretboard();
-        //createjs.Ticker.addEventListener("tick", tick);
     }
 
     function makeTuningSelectElements() {
         /* Make select boxes for string tuning */
         var tuningHTML = "";
         for (var i = 0; i < fretboard.tuning.length; i++) {
-            tuningHTML += "<select class='tuning-string selectpicker span1' id='string-" + i + "'>";
+            tuningHTML += "<select class='tuning-string' id='string-" + i + "'>";
             for (var note = 0; note < NOTE_CHARS.length; note++) {
                 if (fretboard.tuning[i] == getNoteChar(note)) {
                     tuningHTML += "<option value='" + NOTE_CHARS[note] + "' selected='selected'>" + NOTE_CHARS[note] + "</option>";
@@ -102,12 +95,15 @@ var fretviewer = function() {
 
         /* Add listeners for each UI element */
         $("#num-frets").change(function() {
-            /* Keep numFrets within reasonable bounds */
-            var numFrets = $("#num-frets").val();
-            if (numFrets > MAX_FRETS) numFrets = MAX_FRETS;
-            if (numFrets < MIN_FRETS) numFrets = MIN_FRETS;
-            fretboard.numFrets = numFrets;
-            updateFretboard();
+            var numFrets = parseInt($("#num-frets").val());
+            /* Make sure numFrets is a number */
+            if (!isNaN(numFrets)) {
+                /* Keep numFrets within reasonable bounds */
+                if (numFrets > MAX_FRETS) numFrets = MAX_FRETS;
+                if (numFrets < MIN_FRETS) numFrets = MIN_FRETS;
+                fretboard.numFrets = numFrets;
+                updateFretboard();
+            }
         });
 
         /* If the scale's key changes */
@@ -210,15 +206,6 @@ var fretviewer = function() {
             fretboard.addChild(string);
         }
 
-        /*
-        fretboard.on("pressmove", function(evt) {
-            evt.currentTarget.x = evt.stageX;
-            evt.currentTarget.y = evt.stageY;
-            update = true;
-            console.log("sliding!");
-        });
-        */
-
         stage.addChild(fretboard);
         stage.update();
     }
@@ -247,13 +234,7 @@ var fretviewer = function() {
                 if (curNote == noteNum) {
                     var noteCircle = new createjs.Shape();
 
-                    var x;
-                    //if (mode == "RIGHT HANDED") {
-                        x = fret * fretSpacing + fretSpacing/2;
-                    //}
-                    //if (mode == "LEFT HANDED") {
-                        //x = (fretboard.numFrets - (fret+1)) * fretSpacing + fretSpacing/2; // Left-handed mode
-                    //}
+                    var x = fret * fretSpacing + fretSpacing/2;
                     var y = STRING_PAD + string*stringSpacing;
                     noteCircle.graphics.beginStroke("#000").beginFill(color).drawCircle(x, y, NOTE_SIZE);
                     fretboard.notes.addChild(noteCircle);
@@ -274,16 +255,6 @@ var fretviewer = function() {
     function getNoteChar(num) {
         return NOTE_CHARS[num % NOTE_CHARS.length];
     }
-
-    /*
-    function tick(event) {
-        // this set makes it so the stage only re-renders when an event handler indicates a change has happened.
-        if (update) {
-            update = false; // only update once
-            stage.update(event);
-        }
-    }
-    */
 
     return p;
 

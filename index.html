@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE xhtml>
 <html>
     <head>
         <title>Fretviewer</title>
@@ -16,7 +16,7 @@
 
             .page-container {
                 top: 40px;
-                left: 50px;
+                left: 0px;
                 position: relative;
             }
 
@@ -26,7 +26,7 @@
 
             .fretholder {
                 position: absolute;
-                left: 350px;
+                left: 360px;
             }
         </style>
     </head>
@@ -39,10 +39,6 @@
             <h1>Fretviewer</h1>
             <div class="controls row">
                 <div class="col-md-10">
-                    <!-- <div class="btn-group">
-                        <button type="button" class="btn btn-default">Left</button>
-                        <button type="button" class="btn btn-default">Right</button>
-                    </div><br/> -->
                     <h3>Tuning</h3>
                     <br/>
                     <select id="tuning-presets" class="selectpicker">
@@ -54,6 +50,8 @@
                         <option value="A D G C">Cello</option>
                         <option value="E A D G">Mandolin</option>
                         <option value="D B G C">Banjo</option>
+                        <option value="A E C G">Ukelele</option>
+                        <option value="A E E">Balalaika</option>
                     </select>
                     <br/>&nbsp;
                     <button id="add-string" type="button" class="btn btn-primary">Add String</button>

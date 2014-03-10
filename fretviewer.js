@@ -95,10 +95,6 @@ var fretviewer = function() {
         $("#add-string").click(function () {
             if (fretboard.tuning.length < MAX_STRINGS) {
                 fretboard.tuning.push("A");
-                // /* Needed to update text on tuning-presets selectbox */
-                // var text = $("#tuning-presets option[value='CUSTOM']").text();
-                // $('.bootstrap-select .filter-option').text(text);
-                // $("#tuning-presets").val("CUSTOM");
                 updateUI();
                 updateFretboard();
             }

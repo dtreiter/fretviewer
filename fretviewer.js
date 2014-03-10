@@ -16,7 +16,6 @@ var fretviewer = function() {
     var stage;
     var fretboard;
     var tuning;
-    var scale;
     var stringSpacing, fretSpacing;
     //var mode = "RIGHT HANDED";
 
@@ -28,7 +27,7 @@ var fretviewer = function() {
     function updateFretboard() {
         updateUI();
         drawBoard();
-        drawScale(scale);
+        drawScale(fretboard.scale);
     }
 
     function updateUI() {
@@ -54,10 +53,8 @@ var fretviewer = function() {
         fretboard.notes = new createjs.Container();
         fretboard.numFrets = 13;
         fretboard.tuning = ["E", "B", "G", "D", "A", "E"]; // highest to lowest
+        fretboard.scale = ["C", "D", "E", "F", "G", "A", "B"]; // C major
         fretboard.numStrings = fretboard.tuning.length;
-        
-        // scale = ["E", "F#", "G#", "A", "B", "C#", "D#"]; // E major
-        scale = ["C", "D", "E", "F", "G", "A", "B"]; // C major
 
         initUI();
         updateFretboard();
@@ -89,6 +86,17 @@ var fretviewer = function() {
         });
     }
 
+    function updateScale() {
+        var key = $("#key-scale").val();
+        var keyNum = getNoteNum(key);
+        var scaleNums = $("#scale").val().split(" ");
+        fretboard.scale = new Array();
+        for (var i = 0; i < scaleNums.length; i++) {
+            var note = getNoteChar(parseInt(scaleNums[i]) + keyNum);
+            fretboard.scale.push(note);
+        }
+    }
+
     function initUI() {
         makeTuningSelectElements();
 
@@ -99,6 +107,18 @@ var fretviewer = function() {
             if (numFrets > MAX_FRETS) numFrets = MAX_FRETS;
             if (numFrets < MIN_FRETS) numFrets = MIN_FRETS;
             fretboard.numFrets = numFrets;
+            updateFretboard();
+        });
+
+        /* If the scale's key changes */
+        $("#key-scale").change(function() {
+            updateScale();
+            updateFretboard();
+        });
+
+        /* If the scale changes */
+        $("#scale").change(function() {
+            updateScale();
             updateFretboard();
         });
 
@@ -237,6 +257,11 @@ var fretviewer = function() {
                     var y = STRING_PAD + string*stringSpacing;
                     noteCircle.graphics.beginStroke("#000").beginFill(color).drawCircle(x, y, NOTE_SIZE);
                     fretboard.notes.addChild(noteCircle);
+
+                    /* Add note text */
+                    var text = new createjs.Text(note, "12px Arial", "#000");
+                    text.x = x - NOTE_SIZE/2; text.y = y; text.textBaseline = "middle";
+                    fretboard.notes.addChild(text);
                 }
             }
         }

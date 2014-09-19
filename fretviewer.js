@@ -1,4 +1,7 @@
-var fretviewer = function() {
+(function() {
+  var app = angular.module("fretviewer", [ ]);
+
+  app.controller("fretboardController", ["$scope", function($scope) {
     var BOARD_WIDTH = 800;
     var BOARD_HEIGHT = 200;
     var FRET_THICKNESS = 2;
@@ -9,86 +12,108 @@ var fretviewer = function() {
     var MAX_STRINGS = 9;
     var MIN_STRINGS = 3;
     var NOTE_SIZE = 12;
+    $scope.tunings = [
+      {
+        "name": "Custom",
+        "notes": ["A", "A", "A", "A", "A", "A"]
+      },
+      {
+        "name": "Guitar", 
+        "notes": ["E", "B", "G", "D", "A", "E"]
+      },
+      {
+        "name": "7 String Guitar", 
+        "notes": ["E", "B", "G", "D", "A", "E", "B"]
+      },
+      {
+        "name": "Bass Guitar", 
+        "notes": ["G", "D", "A", "E"]
+      },
+      {
+        "name": "Violin", 
+        "notes": ["E", "A", "D", "G"]
+      },
+      {
+        "name": "Cello", 
+        "notes": ["A", "D", "G", "C"]
+      },
+      {
+        "name": "Mandolin", 
+        "notes": ["E", "A", "D", "G"]
+      },
+      {
+        "name": "Banjo", 
+        "notes": ["D", "B", "G", "C"]
+      },
+      {
+        "name": "Ukelele", 
+        "notes": ["A", "E", "C", "G"]
+      },
+      {
+        "name": "Balalaika", 
+        "notes": ["A", "E", "E"]
+      }
+    ];
 
-    var NOTE_CHARS = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
+    $scope.scales = [
+      {
+        "name": "Major",
+        "intervals": [0, 2, 4, 5, 7, 9, 11]
+      },
+      {
+        "name": "Natural Minor",
+        "intervals": [0, 2, 3, 5, 7, 8, 10]
+      },
+      {
+        "name": "Harmonic Minor",
+        "intervals": [0, 2, 3, 5, 7, 8, 11]
+      },
+      {
+        "name": "Minor Pentatonic",
+        "intervals": [0, 3, 5, 7, 10]
+      },
+    ];
 
-    var canvas;
-    var stage;
-    var fretboard;
     var stringSpacing, fretSpacing;
+    $scope.noteChars = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
+    $scope.numFrets = 13;
+    /* Create a new stage and point it at our canvas */
+    var canvas = document.getElementById("fretboard");
+    var stage = new createjs.Stage(canvas);
+    
+    $scope.fretboard = new createjs.Container();
+    fretboard.notes = new createjs.Container();
+    $scope.numFrets = 13;
+    $scope.tuning = $scope.tunings[1]; // Default guitar
+    $scope.scaleKey = "C";
+    $scope.scale = $scope.scales[0];
+    //$scope.scale = ["C", "D", "E", "F", "G", "A", "B"]; // TODO: change -> the html's model is a number array like above
+    $scope.numStrings = $scope.tuning.length;
 
-    /* Holds public methods */
-    var p = {};
+    $scope.addString = function() {
+      if ($scope.tuning.notes.length < MAX_STRINGS) {
+        $scope.tuning.notes.push("A");
+      } 
+    }
+
+    $scope.removeString = function() {
+      if ($scope.tuning.notes.length > MIN_STRINGS) {
+        $scope.tuning.notes.pop();
+        //updateFretboard();
+      } 
+    }
 
     function updateFretboard() {
-        updateUI();
         drawBoard();
         drawScale(fretboard.scale);
-    }
-
-    function updateUI() {
-        $("#num-frets").val(fretboard.numFrets);
-
-        makeTuningSelectElements();
-
-        /* Enable bootstrap select styling */
-        $(".selectpicker").selectpicker();
-    }
-
-    p.init = function() {
-        /* Create a new stage and point it at our canvas */
-        canvas = document.getElementById("fretboard");
-        stage = new createjs.Stage(canvas);
-        
-        fretboard = new createjs.Container();
-        fretboard.notes = new createjs.Container();
-        fretboard.numFrets = 13;
-        fretboard.tuning = ["E", "B", "G", "D", "A", "E"]; // highest to lowest. Default guitar
-        fretboard.scale = ["C", "D", "E", "F", "G", "A", "B"]; // C major
-        fretboard.numStrings = fretboard.tuning.length;
-
-        initUI();
-        updateFretboard();
     }
 
     function initUI() {
         makeTuningSelectElements();
 
-        /* Add listeners for each UI element */
-        $("#num-frets").change(function() {
-            var numFrets = parseInt($("#num-frets").val());
-            /* Make sure numFrets is a number */
-            if (!isNaN(numFrets)) {
-                /* Keep numFrets within reasonable bounds */
-                if (numFrets > MAX_FRETS) numFrets = MAX_FRETS;
-                if (numFrets < MIN_FRETS) numFrets = MIN_FRETS;
-                fretboard.numFrets = numFrets;
-                updateFretboard();
-            }
-        });
-
-        /* If the scale's key changes */
-        $("#key-scale").change(function() {
-            updateScale();
-            updateFretboard();
-        });
-
         /* If the scale changes */
         $("#scale").change(function() {
             updateScale();
-            updateFretboard();
-        });
-
-        $("#tuning-presets").change(function () {
-            var preset = $("#tuning-presets").val();
-            if (preset == "CUSTOM") {
-                /* Set to all A's */
-                fretboard.tuning = ["A", "A", "A", "A", "A", "A"];
-            }
-            else {
-                fretboard.tuning = preset.split(" ");
-            }
-            updateUI();
             updateFretboard();
         });
 
@@ -100,51 +125,16 @@ var fretviewer = function() {
             }
         });
 
-        $("#remove-string").click(function () {
-            if (fretboard.tuning.length > MIN_STRINGS) {
-                fretboard.tuning.pop();
-                updateUI();
-                updateFretboard();
-            }
-        });
     }
 
-    /* Make select boxes for string tuning */
-    function makeTuningSelectElements() {
-        var tuningHTML = "";
-        for (var i = 0; i < fretboard.tuning.length; i++) {
-            tuningHTML += "<select class='tuning-string' id='string-" + i + "'>";
-            for (var note = 0; note < NOTE_CHARS.length; note++) {
-                var noteChar = NOTE_CHARS[note];
-                if (fretboard.tuning[i] == getNoteChar(note)) {
-                    tuningHTML += "<option value='" + noteChar + "' selected='selected'>" + noteChar + "</option>";
-                }
-                else {
-                    tuningHTML += "<option value='" + noteChar + "'>" + noteChar + "</option>";
-                }
-            }
-            tuningHTML += "</select><br/>";
-        }
-        $("#tuning-container").html(tuningHTML);
-
-        /* Add listeners */
-        $("select.tuning-string").change(function () {
-            var stringNum = this.id.split("-")[1]; // example: this.id = string-0 -> stringNum = 0
-            fretboard.tuning[stringNum] = $(this).val();
-            updateFretboard();
-        });
-    }
-
-    /* Takes scale from UI and sets internal scale */
+    /* Gets scale notes from scale key and scale intervals */
     function updateScale() {
-        var key = $("#key-scale").val();
-        var keyNum = getNoteNum(key);
-        var scaleNums = $("#scale").val().split(" ");
+        var keyNum = getNoteNum(scaleKey);
         fretboard.scale = new Array();
-        for (var i = 0; i < scaleNums.length; i++) {
-            var note = getNoteChar(parseInt(scaleNums[i]) + keyNum);
+        $scope.scale.intervals.forEach(function() {
+            var note = getNoteChar(parseInt($scope.scale.intervals[i]) + keyNum);
             fretboard.scale.push(note);
-        }
+        });
     }
 
     /* Draws neck, ref dots, frets, and strings */
@@ -256,7 +246,7 @@ var fretviewer = function() {
         return NOTE_CHARS[num % NOTE_CHARS.length];
     }
 
-    return p;
+  }]);
 
-}();
+})();
 

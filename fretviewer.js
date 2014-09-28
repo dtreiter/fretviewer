@@ -81,8 +81,8 @@
     var canvas = document.getElementById("fretboard");
     var stage = new createjs.Stage(canvas);
     
-    $scope.fretboard = new createjs.Container();
-    $scope.fretboard.notes = new createjs.Container();
+    fretboard = new createjs.Container();
+    fretboard.notes = new createjs.Container();
     $scope.numFrets = 13;
     $scope.tuning = $scope.tunings[1]; // Default is guitar
     $scope.scaleKey = "C";
@@ -90,14 +90,14 @@
 
     $scope.addString = function() {
       if ($scope.tuning.notes.length < MAX_STRINGS) {
-        $scope.tuning = $scope.tunings[0];
+        switchToCustomTuning();
         $scope.tuning.notes.push("A");
       } 
     }
 
     $scope.removeString = function() {
       if ($scope.tuning.notes.length > MIN_STRINGS) {
-        $scope.tuning = $scope.tunings[0];
+        switchToCustomTuning();
         $scope.tuning.notes.pop();
       } 
     }
@@ -107,6 +107,16 @@
       var scaleNotes = getScaleNotes($scope.tuning.notes);
       drawScale(scaleNotes);
     });
+
+    $scope.$watch("tunings", function() {
+      switchToCustomTuning();
+    }, true);
+
+    function switchToCustomTuning() {
+      var tmpTuning = $scope.tuning.notes.slice();
+      $scope.tuning = $scope.tunings[0];
+      $scope.tuning.notes = tmpTuning;
+    }
 
     /* Gets scale notes from scale key and scale intervals */
     function getScaleNotes() {
@@ -125,13 +135,13 @@
         $scope.numStrings = $scope.tuning.notes.length;
 
         /* Erase a previously drawn fretboard */
-        $scope.fretboard.removeAllChildren();
+        fretboard.removeAllChildren();
 
         /* Make neck */
         var neck = new createjs.Shape();
         neck.x = 0; neck.y = 0;
         neck.graphics.beginFill("#977130").drawRect(neck.x, neck.y, BOARD_WIDTH, BOARD_HEIGHT);
-        $scope.fretboard.addChild(neck);
+        fretboard.addChild(neck);
         
         /* Make reference dots */
         fretSpacing = BOARD_WIDTH / $scope.numFrets;
@@ -143,7 +153,7 @@
                 var x = fret * fretSpacing + fretSpacing/2;
                 var y = BOARD_HEIGHT/2;
                 dotCircle.graphics.beginStroke("#000").beginFill('#000').drawCircle(x, y, 8);
-                $scope.fretboard.addChild(dotCircle);
+                fretboard.addChild(dotCircle);
             }
             else if (loc == 0) {
                 /* Make double dots */
@@ -154,8 +164,8 @@
                 var lowerY = (2/3) * BOARD_HEIGHT;
                 upperDot.graphics.beginStroke("#000").beginFill('#000').drawCircle(x, upperY, 8);
                 lowerDot.graphics.beginStroke("#000").beginFill('#000').drawCircle(x, lowerY, 8);
-                $scope.fretboard.addChild(upperDot);
-                $scope.fretboard.addChild(lowerDot);
+                fretboard.addChild(upperDot);
+                fretboard.addChild(lowerDot);
             }
         }
 
@@ -163,7 +173,7 @@
         for (var i = 0; i < $scope.numFrets; i++) {
             var fret = new createjs.Shape();
             fret.graphics.beginFill("#c7b393").drawRect(i*fretSpacing, 0, FRET_THICKNESS, BOARD_HEIGHT);
-            $scope.fretboard.addChild(fret);
+            fretboard.addChild(fret);
         }
 
         /* Make strings */
@@ -172,24 +182,24 @@
             var string = new createjs.Shape();
             var yloc = STRING_PAD + i*stringSpacing - STRING_THICKNESS/2;
             string.graphics.beginFill("#000").drawRect(0, yloc, BOARD_WIDTH, STRING_THICKNESS);
-            $scope.fretboard.addChild(string);
+            fretboard.addChild(string);
         }
 
-        stage.addChild($scope.fretboard);
+        stage.addChild(fretboard);
         stage.update();
     }
 
-    /* Draws each note in a scale on the $scope.fretboard */
+    /* Draws each note in a scale on the fretboard */
     function drawScale(scale) {
         /* Clear a previously drawn scale */
-        $scope.fretboard.notes.removeAllChildren();
+        fretboard.notes.removeAllChildren();
 
         /* Draw the root note of the scale as red. Other notes off-white. */
         drawNote(scale[0], "red");
         for (var note = 1; note < scale.length; note++) {
             drawNote(scale[note], "#DDD");
         }
-        stage.addChild($scope.fretboard.notes);
+        stage.addChild(fretboard.notes);
         stage.update();
     }
 
@@ -206,14 +216,14 @@
                     var x = fret * fretSpacing + fretSpacing/2;
                     var y = STRING_PAD + string*stringSpacing;
                     noteCircle.graphics.beginStroke("#000").beginFill(color).drawCircle(x, y, NOTE_SIZE);
-                    $scope.fretboard.notes.addChild(noteCircle);
+                    fretboard.notes.addChild(noteCircle);
 
                     /* Add note name as text */
                     var text = new createjs.Text(note, "12px Arial", "#000");
                     text.x = x - NOTE_SIZE/2;
                     text.y = y;
                     text.textBaseline = "middle"; // text alignment
-                    $scope.fretboard.notes.addChild(text);
+                    fretboard.notes.addChild(text);
                 }
             }
         }

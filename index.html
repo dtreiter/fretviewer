@@ -49,7 +49,7 @@
                     <button id="remove-string" type="button" class="btn btn-danger" ng-click="removeString()">Remove String</button> <br/><br/>&nbsp;
 
                     <label for="num-frets" ng->Number of frets:</label>
-                    <input id="num-frets" class="form-control" type="number" min="5" max="25" value="{{numFrets}}"></input>
+                    <input ng-model="numFrets" id="num-frets" class="form-control" type="number" min="5" max="25" value="{{numFrets}}"></input>
 
                     <h3>Scale</h3> <br/>
 
